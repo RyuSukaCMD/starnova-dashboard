@@ -1,11 +1,36 @@
 {
-  "name": "starnova-dashboard",
+  "name": "starnova",
   "version": "1.0.0",
-  "description": "StarNova Dashboard — frontend statis untuk dash.starnova.my.id",
   "private": true,
+  "description": "StarNova — Premium REST API Platform (Next.js 14, RSC, space/cyberpunk UI)",
   "scripts": {
-    "dev": "npx serve public",
-    "start": "npx serve public"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "seed": "node scripts/seed.mjs"
   },
-  "license": "MIT"
+  "dependencies": {
+    "next": "14.2.15",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "next-auth": "4.24.8",
+    "mongoose": "^8.6.3",
+    "framer-motion": "^11.5.4",
+    "bcryptjs": "^2.4.3",
+    "nanoid": "^5.0.7",
+    "clsx": "^2.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "20.16.10",
+    "@types/react": "18.3.11",
+    "@types/react-dom": "18.3.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.13",
+    "typescript": "5.6.2"
+  },
+  "engines": {
+    "node": ">=18.17"
+  }
 }
