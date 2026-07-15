@@ -1,0 +1,5 @@
+node_modules
+.vercel
+.env
+preview_*.html
+.DS_Store

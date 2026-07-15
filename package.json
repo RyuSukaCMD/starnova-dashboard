@@ -1,0 +1,11 @@
+{
+  "name": "starnova-dashboard",
+  "version": "1.0.0",
+  "description": "StarNova Dashboard — frontend statis untuk dash.starnova.my.id",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve public",
+    "start": "npx serve public"
+  },
+  "license": "MIT"
+}

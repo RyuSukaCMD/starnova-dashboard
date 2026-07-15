@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="id">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>StarNova · Dashboard</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="/css/dash.css" />
+    </head>
+    <body>
+        <div id="space-bg"></div>
+        <canvas id="stars"></canvas>
+
+        <!-- LOGIN -->
+        <div class="login-wrap" id="loginScreen">
+            <div class="glass login-card">
+                <div class="brand-row"><span class="brand-mark">✦</span> StarNova <span class="grad">Dashboard</span></div>
+                <p class="center muted" style="margin-bottom: 20px; font-size: .85rem">Kelola API Key & pantau penggunaan.</p>
+                <div id="loginForm">
+                    <div class="field"><label>Email</label><input id="lEmail" type="email" placeholder="kamu@email.com" /></div>
+                    <div class="field"><label>Password</label><input id="lPass" type="password" placeholder="••••••••" /></div>
+                    <div class="err" id="loginErr"></div>
+                    <button class="btn btn-primary" id="loginBtn" style="width: 100%; justify-content: center">Masuk</button>
+                    <p class="center muted" style="margin-top: 14px; font-size: .82rem">
+                        Belum punya akun? <a id="toRegister" style="color: var(--cyan); cursor: pointer">Daftar</a>
+                    </p>
+                </div>
+                <div id="registerForm" class="hidden">
+                    <div class="field"><label>Nama</label><input id="rName" placeholder="Nama kamu" /></div>
+                    <div class="field"><label>Email</label><input id="rEmail" type="email" placeholder="kamu@email.com" /></div>
+                    <div class="field"><label>Password</label><input id="rPass" type="password" placeholder="min 6 karakter" /></div>
+                    <div class="err" id="regErr"></div>
+                    <button class="btn btn-primary" id="regBtn" style="width: 100%; justify-content: center">Daftar</button>
+                    <p class="center muted" style="margin-top: 14px; font-size: .82rem">
+                        Sudah punya akun? <a id="toLogin" style="color: var(--cyan); cursor: pointer">Login</a>
+                    </p>
+                </div>
+                <p class="center" style="margin-top: 18px; font-size: .8rem">
+                    <a href="https://starnova.my.id" style="color: var(--muted)">← Kembali ke situs</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- DASHBOARD -->
+        <div class="dash hidden" id="dash">
+            <aside class="side">
+                <div class="brand-row"><span class="brand-mark">✦</span> StarNova</div>
+                <button class="side-link active" data-tab="overview">📊 Dashboard</button>
+                <button class="side-link" data-tab="keys">🔑 API Keys</button>
+                <button class="side-link" data-tab="usage">📈 Usage</button>
+                <button class="side-link" data-tab="analytics">🌌 Analytics</button>
+                <button class="side-link" data-tab="billing">💳 Billing</button>
+                <button class="side-link" data-tab="settings">⚙️ Settings</button>
+                <a class="side-link" href="https://starnova.my.id" target="_blank">📖 Documentation</a>
+                <button class="side-link" data-tab="admin" id="adminTabBtn" style="display:none">🛡️ Admin</button>
+                <button class="side-link logout" id="logoutBtn">🚪 Logout</button>
+            </aside>
+            <main class="main">
+                <div class="topbar">
+                    <div>
+                        <h1 id="tabTitle">Dashboard</h1>
+                        <p id="tabSub">Ringkasan penggunaan API kamu.</p>
+                    </div>
+                    <div class="muted mono" id="whoami"></div>
+                </div>
+
+                <!-- Overview -->
+                <section class="tab active" id="tab-overview">
+                    <div class="kpi-grid" id="kpiGrid"></div>
+                    <div class="glass panel">
+                        <h3>📊 Request 7 Hari Terakhir</h3>
+                        <div class="chart" id="chart"></div>
+                    </div>
+                    <div class="glass panel">
+                        <h3>⚡ Recent Request</h3>
+                        <table class="tbl"><thead><tr><th>Endpoint</th><th>Method</th><th>Status</th><th>Time</th><th>When</th></tr></thead>
+                        <tbody id="recentBody"></tbody></table>
+                    </div>
+                    <div class="glass panel">
+                        <h3>🔥 Top Endpoint</h3>
+                        <table class="tbl"><thead><tr><th>Endpoint</th><th>Requests</th></tr></thead><tbody id="topBody"></tbody></table>
+                    </div>
+                </section>
+
+                <!-- Keys -->
+                <section class="tab" id="tab-keys">
+                    <div style="margin-bottom: 16px"><button class="btn btn-primary btn-sm" id="newKeyBtn">+ Buat API Key</button></div>
+                    <div class="glass panel">
+                        <table class="tbl"><thead><tr><th>Key</th><th>Plan</th><th>Status</th><th>Usage</th><th>Expired</th><th>Aksi</th></tr></thead>
+                        <tbody id="keysBody"></tbody></table>
+                    </div>
+                </section>
+
+                <!-- Usage -->
+                <section class="tab" id="tab-usage">
+                    <div class="glass panel">
+                        <table class="tbl"><thead><tr><th>Key</th><th>Daily</th><th>Monthly</th><th>Total</th><th>Last Used</th></tr></thead>
+                        <tbody id="usageBody"></tbody></table>
+                    </div>
+                </section>
+
+                <!-- Analytics -->
+                <section class="tab" id="tab-analytics">
+                    <div class="kpi-grid" id="anaGrid"></div>
+                    <div class="glass panel"><h3>🌌 Aktivitas</h3><div class="chart" id="anaChart"></div></div>
+                </section>
+
+                <!-- Billing -->
+                <section class="tab" id="tab-billing">
+                    <div class="glass panel">
+                        <h3>💳 Paket Aktif</h3>
+                        <p class="muted" id="billPlan" style="margin-bottom: 14px"></p>
+                        <a class="btn btn-primary btn-sm" href="https://starnova.my.id" target="_blank">Upgrade Paket →</a>
+                    </div>
+                </section>
+
+                <!-- Settings -->
+                <section class="tab" id="tab-settings">
+                    <div class="glass panel">
+                        <h3>⚙️ Akun</h3>
+                        <div class="field"><label>Nama</label><input id="setName" /></div>
+                        <div class="field"><label>Email</label><input id="setEmail" disabled /></div>
+                        <p class="muted" style="font-size: .82rem">Perubahan profil lanjutan tersedia di rilis berikutnya.</p>
+                    </div>
+                </section>
+
+                <!-- Admin -->
+                <section class="tab" id="tab-admin">
+                    <div class="kpi-grid" id="adminKpi"></div>
+                    <div class="glass panel">
+                        <h3>👥 Users</h3>
+                        <table class="tbl"><thead><tr><th>Email</th><th>Plan</th><th>Role</th><th>Status</th><th>Aksi</th></tr></thead>
+                        <tbody id="adminUsers"></tbody></table>
+                    </div>
+                    <div class="glass panel">
+                        <h3>🛰️ Maintenance & Announcement</h3>
+                        <div class="field"><label>Announcement</label><input id="admAnnounce" /></div>
+                        <div class="row-actions">
+                            <button class="btn btn-ghost btn-sm" id="admSaveAnnounce">Simpan</button>
+                            <button class="btn btn-danger btn-sm" id="admMaintOn">Maintenance ON</button>
+                            <button class="btn btn-ghost btn-sm" id="admMaintOff">Maintenance OFF</button>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <div class="toast" id="toast"></div>
+        <script src="/config.js"></script>
+        <script src="/js/dash.js"></script>
+    </body>
+</html>
