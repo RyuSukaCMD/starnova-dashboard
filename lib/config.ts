@@ -9,15 +9,21 @@ export const config = {
         "https://starnova.my.id",
     mongoUri: process.env.MONGODB_URI || "",
     jwtSecret: process.env.NEXTAUTH_SECRET || "starnova-dev-secret",
-    adminEmails: (process.env.ADMIN_EMAILS || "")
-        .split(",")
-        .map((s) => s.trim().toLowerCase())
-        .filter(Boolean),
+    // Admin default: starnovabusinessmail@gmail.com (bisa ditambah lewat ADMIN_EMAILS).
+    adminEmails: [
+        "starnovabusinessmail@gmail.com",
+        ...(process.env.ADMIN_EMAILS || "")
+            .split(",")
+            .map((s) => s.trim().toLowerCase())
+            .filter(Boolean)
+    ],
     google: {
         clientId: process.env.GOOGLE_CLIENT_ID || "",
         clientSecret: process.env.GOOGLE_CLIENT_SECRET || ""
     },
-    allowDemoLogin: process.env.ALLOW_DEMO_LOGIN !== "false"
+    // Login default = Google OAuth. Demo login OFF secara default (aktifkan
+    // eksplisit dengan ALLOW_DEMO_LOGIN=true, mis. untuk testing lokal tanpa Google).
+    allowDemoLogin: process.env.ALLOW_DEMO_LOGIN === "true"
 }
 
 export const API_KEY_PREFIX = "snv_"
