@@ -26,15 +26,29 @@ export async function runApiRequest(
     const ep = getEndpoint(path)
     if (!ep) return err(404, "Endpoint tidak ditemukan.")
 
-    await connectDB().catch(() => {})
+    // Tunggu koneksi DB benar-benar siap. Andalkan hasil connectDB() (bukan
+    // hanya dbReady() yang bisa race), lalu cek juga readyState.
+    let conn: any = null
+    let dbError = ""
+    try {
+        conn = await connectDB()
+    } catch (e: any) {
+        dbError = e?.message || String(e)
+    }
+    const dbUp = !!conn && dbReady()
 
-    if (dbReady()) {
-        const s = await Settings.findOne({ key: "global" }).lean<any>()
-        if (s?.maintenance) return err(503, "StarNova sedang dalam pemeliharaan.")
+    if (dbUp) {
+        try {
+            const s = await Settings.findOne({ key: "global" }).lean<any>()
+            if (s?.maintenance) return err(503, "StarNova sedang dalam pemeliharaan.")
+        } catch {}
     }
 
     if (!ctx.apiKey) return err(401, "API Key diperlukan (header 'apikey' atau ?apikey=).")
-    if (!dbReady()) return err(503, "Database tidak aktif. Set MONGODB_URI.")
+    if (!dbUp) {
+        if (!process.env.MONGODB_URI) return err(503, "Database tidak aktif. Set MONGODB_URI di environment.")
+        return err(503, "Gagal terhubung ke database" + (dbError ? ": " + dbError : ". Cek /api/debug/db"))
+    }
 
     const keyDoc = await ApiKey.findOne({ key: ctx.apiKey })
     if (!keyDoc) return err(401, "Invalid API Key")
