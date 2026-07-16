@@ -6,20 +6,27 @@ let cached = (global as any).__mongoose
 if (!cached) cached = (global as any).__mongoose = { conn: null, promise: null }
 
 export async function connectDB() {
-    if (cached.conn) return cached.conn
+    if (cached.conn && mongoose.connection.readyState === 1) return cached.conn
     if (!config.mongoUri) return null
+
     if (!cached.promise) {
         mongoose.set("strictQuery", true)
-        cached.promise = mongoose
-            .connect(config.mongoUri, { maxPoolSize: 10, serverSelectionTimeoutMS: 15000 })
-            .then((m) => m)
-            .catch((e) => {
-                cached.promise = null
-                console.error("MongoDB:", e.message)
-                return null
-            })
+        cached.promise = mongoose.connect(config.mongoUri, {
+            maxPoolSize: 10,
+            serverSelectionTimeoutMS: 8000,
+            connectTimeoutMS: 8000,
+            socketTimeoutMS: 20000
+        })
     }
-    cached.conn = await cached.promise
+    try {
+        cached.conn = await cached.promise
+    } catch (e) {
+        // Reset agar percobaan berikutnya konek ulang, lalu lempar ke pemanggil
+        // (biar /api/debug/db bisa menampilkan error asli).
+        cached.promise = null
+        cached.conn = null
+        throw e
+    }
     return cached.conn
 }
 
