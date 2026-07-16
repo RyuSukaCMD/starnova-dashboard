@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation"
-import { currentUser } from "@/lib/session"
+import Link from "next/link"
+import { currentUser, sessionEmail } from "@/lib/session"
 import { ApiKey, RequestLog } from "@/lib/models"
+import { ensureUserKey } from "@/lib/apikey"
 import { PageTransition } from "@/components/ui/Motion"
 import DashboardClient from "@/components/dashboard/DashboardClient"
 
@@ -8,18 +10,62 @@ export const metadata = { title: "Dashboard" }
 export const dynamic = "force-dynamic"
 
 export default async function DashboardPage() {
-    // Auth + data DI SERVER (server-first, bukan useEffect di browser).
-    const user = await currentUser()
-    if (!user) redirect("/login?callbackUrl=/dashboard")
+    // 1) Belum login → ke halaman login.
+    const email = await sessionEmail()
+    if (!email) redirect("/login?callbackUrl=/dashboard")
 
-    const keys = await ApiKey.find({ user: user._id }).sort({ createdAt: -1 }).lean<any[]>()
+    // 2) Sudah login tapi DB bermasalah → tampilkan pesan ramah (bukan crash).
+    let user: any = null
+    try {
+        user = await currentUser()
+    } catch {
+        user = null
+    }
+    if (!user) {
+        return (
+            <PageTransition>
+                <section className="grid min-h-screen place-items-center px-4">
+                    <div className="glass noise max-w-md rounded-2xl p-8 text-center">
+                        <h1 className="text-xl font-bold">Dashboard belum siap</h1>
+                        <p className="mt-2 text-sm text-slate-400">
+                            Kamu sudah login sebagai <span className="text-accent">{email}</span>, tapi server belum
+                            bisa terhubung ke database. Pastikan <code className="font-mono">MONGODB_URI</code> sudah
+                            di-set di environment lalu redeploy.
+                        </p>
+                        <p className="mt-3 text-xs text-slate-500">
+                            Cek diagnosa: <Link href="/api/debug/env" className="underline">/api/debug/env</Link>
+                        </p>
+                        <div className="mt-5">
+                            <Link href="/" className="text-sm text-accent hover:underline">Kembali ke beranda</Link>
+                        </div>
+                    </div>
+                </section>
+            </PageTransition>
+        )
+    }
+
+    // 3) Ambil data dashboard (semua dibungkus try/catch → tak pernah crash).
+    let keys: any[] = []
+    let logs: any[] = []
+    let recent: any[] = []
+    try {
+        // pastikan minimal 1 key ada
+        if ((await ApiKey.countDocuments({ user: user._id })) === 0) {
+            await ensureUserKey(user._id, user.plan || "free")
+        }
+        keys = await ApiKey.find({ user: user._id }).sort({ createdAt: -1 }).lean<any[]>()
+        const since = new Date(Date.now() - 7 * 86400000)
+        logs = await RequestLog.find({ user: user._id, at: { $gte: since } }).lean<any[]>()
+        recent = await RequestLog.find({ user: user._id }).sort({ at: -1 }).limit(10).lean<any[]>()
+    } catch (e) {
+        console.error("dashboard data:", (e as any)?.message)
+    }
+
     const totalRequest = keys.reduce((s, k) => s + (k.usageTotal || 0), 0)
     const dailyUsed = keys.reduce((s, k) => s + (k.usageDaily || 0), 0)
     const dailyLimit = keys.reduce((s, k) => s + (k.dailyLimit || 0), 0)
     const nearest = keys.filter((k) => k.expiredAt).sort((a, b) => +new Date(a.expiredAt) - +new Date(b.expiredAt))[0]
 
-    const since = new Date(Date.now() - 7 * 86400000)
-    const logs = await RequestLog.find({ user: user._id, at: { $gte: since } }).lean<any[]>()
     const chart: Record<string, number> = {}
     const top: Record<string, number> = {}
     for (let i = 6; i >= 0; i--) chart[new Date(Date.now() - i * 86400000).toISOString().slice(0, 10)] = 0
@@ -28,7 +74,6 @@ export default async function DashboardPage() {
         if (d in chart) chart[d] += 1
         top[l.endpoint] = (top[l.endpoint] || 0) + 1
     }
-    const recent = await RequestLog.find({ user: user._id }).sort({ at: -1 }).limit(10).lean<any[]>()
 
     const initial = {
         user: { name: user.name, email: user.email, plan: user.plan, image: user.image || "", role: user.role },
