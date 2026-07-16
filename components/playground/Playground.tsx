@@ -65,9 +65,15 @@ export default function Playground({ endpoints }: { endpoints: any[] }) {
                 <label className="mb-1.5 block text-sm text-slate-400">Endpoint</label>
                 <select value={selected} onChange={(e) => setSelected(e.target.value)} className="w-full rounded-xl border border-white/10 bg-[#070813] px-3 py-2.5 text-sm outline-none focus:border-primary">
                     {endpoints.map((e) => (
-                        <option key={e.path} value={e.path}>[{e.method}] {e.path} — {e.name}</option>
+                        <option key={e.path} value={e.path}>[{e.method}] {e.path} {e.live ? "· LIVE" : "· SAMPLE"} — {e.name}</option>
                     ))}
                 </select>
+                {ep && (
+                    <p className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs ${ep.live ? "bg-success/15 text-emerald-300" : "bg-white/10 text-slate-300"}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${ep.live ? "bg-success" : "bg-slate-400"}`} />
+                        {ep.live ? "Endpoint LIVE — mengembalikan data asli" : "Endpoint SAMPLE — masih contoh (belum tersambung provider)"}
+                    </p>
+                )}
 
                 <label className="mb-1.5 mt-4 block text-sm text-slate-400">API Key</label>
                 <input value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="snv_xxxxxxxx" className="w-full rounded-xl border border-white/10 bg-[#070813] px-3 py-2.5 font-mono text-sm outline-none focus:border-primary" />

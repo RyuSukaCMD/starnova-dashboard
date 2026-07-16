@@ -11,7 +11,7 @@ export const config = {
         return (
             process.env.NEXT_PUBLIC_SITE_URL ||
             process.env.NEXTAUTH_URL ||
-            "https://starnova.my.id"
+            "https://dash.starnova.my.id"
         )
     },
     get mongoUri() {
