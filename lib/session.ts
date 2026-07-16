@@ -2,24 +2,44 @@ import { getServerSession } from "next-auth"
 import { getAuthOptions } from "./auth"
 import { connectDB, dbReady } from "./mongo"
 import { User } from "./models"
+import { ensureUserKey } from "./apikey"
+import config from "./config"
 
-// Ambil user DB dari sesi (server-side). Return null bila belum login / DB down.
-// TIDAK PERNAH throw → mencegah "Application error" di halaman.
+// Ambil (atau BUAT) user DB dari sesi. Return null hanya bila belum login /
+// DB benar-benar down. TIDAK PERNAH throw.
 export async function currentUser() {
     try {
         const session = await getServerSession(getAuthOptions())
-        if (!session?.user?.email) return null
+        const email = session?.user?.email?.toLowerCase()
+        if (!email) return null
+
         const db = await connectDB()
         if (!db || !dbReady()) return null
-        return await User.findOne({ email: session.user.email.toLowerCase() })
+
+        let user = await User.findOne({ email })
+        // Fallback: kalau user belum ada (mis. login pertama saat DB belum siap),
+        // buat sekarang + auto-generate API key. Ini memperbaiki dashboard yang
+        // "belum siap" padahal DB sudah konek.
+        if (!user) {
+            user = await User.create({
+                name: session!.user!.name || email.split("@")[0],
+                email,
+                image: (session!.user as any)?.image || "",
+                role: config.adminEmails.includes(email) ? "admin" : "user",
+                plan: "free"
+            })
+            await ensureUserKey(user._id, user.plan).catch(() => {})
+        } else if (config.adminEmails.includes(email) && user.role !== "admin") {
+            user.role = "admin"
+            await user.save().catch(() => {})
+        }
+        return user
     } catch (e) {
         console.error("currentUser error:", (e as any)?.message)
         return null
     }
 }
 
-// Cek apakah user sedang login (tanpa perlu DB) — untuk membedakan
-// "belum login" vs "DB bermasalah".
 export async function sessionEmail() {
     try {
         const session = await getServerSession(getAuthOptions())

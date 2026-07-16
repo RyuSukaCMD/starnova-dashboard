@@ -28,15 +28,15 @@ export default async function DashboardPage() {
                     <div className="glass noise max-w-md rounded-2xl p-8 text-center">
                         <h1 className="text-xl font-bold">Dashboard belum siap</h1>
                         <p className="mt-2 text-sm text-slate-400">
-                            Kamu sudah login sebagai <span className="text-accent">{email}</span>, tapi server belum
-                            bisa terhubung ke database. Pastikan <code className="font-mono">MONGODB_URI</code> sudah
-                            di-set di environment lalu redeploy.
+                            Kamu login sebagai <span className="text-accent">{email}</span>, tapi server belum bisa
+                            memuat akun dari database.
                         </p>
                         <p className="mt-3 text-xs text-slate-500">
-                            Cek diagnosa: <Link href="/api/debug/env" className="underline">/api/debug/env</Link>
+                            Diagnosa koneksi: <Link href="/api/debug/db" className="underline">/api/debug/db</Link>
                         </p>
-                        <div className="mt-5">
-                            <Link href="/" className="text-sm text-accent hover:underline">Kembali ke beranda</Link>
+                        <div className="mt-5 flex justify-center gap-3">
+                            <Link href="/dashboard" className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm hover:bg-white/10">Coba lagi</Link>
+                            <Link href="/" className="rounded-xl px-4 py-2 text-sm text-accent hover:underline">Beranda</Link>
                         </div>
                     </div>
                 </section>
