@@ -285,7 +285,6 @@ const DL_LIVE: [string, string, string][] = [
     ["soundcloud", "SoundCloud", "soundcloud"],
     ["mediafire", "Mediafire", "mediafire"],
     ["gdrive", "Google Drive", "gdrivedl"],
-    ["terabox", "Terabox", "terabox"],
     ["capcut", "CapCut", "capcut"],
     ["snackvideo", "SnackVideo", "snackvideo"],
     ["likee", "Likee", "likee"],
@@ -307,6 +306,44 @@ for (const [slug, name, kind] of DL_LIVE) {
         }
     })
 }
+
+// ── Terabox (self-host di StarNova) — dukung SEMUA tipe file + multi-file/folder ──
+reg({
+    category: "Downloader",
+    path: "/api/v1/download/terabox",
+    name: "Terabox Downloader",
+    description:
+        "Unduh dari Terabox (semua tipe file, mendukung share berisi banyak file / folder). Mengembalikan daftar file + link download langsung.",
+    params: [
+        {
+            name: "url",
+            type: "string",
+            required: true,
+            description: "Link share Terabox (1024tera / terabox.app / /s/ / ?surl=)",
+            example: "https://1024terabox.com/s/1abcdef"
+        }
+    ],
+    responseExample: ok({
+        shareId: "abcdef",
+        title: "video.mp4",
+        files: [
+            {
+                name: "video.mp4",
+                size: "12.5 MB",
+                sizeBytes: 13107200,
+                type: "video",
+                download: "https://d.terabox.com/file/...",
+                thumbnail: "https://...jpg",
+                isDir: false
+            }
+        ]
+    }),
+    live: true,
+    handler: async (p) => {
+        if (!p.url) throw { code: 400, message: "Parameter 'url' wajib." }
+        return P.terabox(p.url)
+    }
+})
 
 // ── Search ──
 reg({
