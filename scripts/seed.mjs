@@ -14,7 +14,9 @@ const PLANS = [
     { id: "free", name: "Free", price: 0, dailyLimit: 100, monthlyLimit: 1000, rateLimitPerMin: 20, support: "Community", order: 1 },
     { id: "basic", name: "Basic", price: 25000, dailyLimit: 1000, monthlyLimit: 20000, rateLimitPerMin: 60, support: "Email", order: 2 },
     { id: "premium", name: "Premium", price: 75000, dailyLimit: 10000, monthlyLimit: 300000, rateLimitPerMin: 120, support: "Priority", order: 3 },
-    { id: "enterprise", name: "Enterprise", price: 300000, dailyLimit: 100000, monthlyLimit: 5000000, rateLimitPerMin: 600, support: "Dedicated", order: 4 }
+    { id: "enterprise", name: "Enterprise", price: 300000, dailyLimit: 100000, monthlyLimit: 5000000, rateLimitPerMin: 600, support: "Dedicated", order: 4 },
+    // Plan khusus owner/bot: limit 0 = TANPA BATAS (dipakai owner key). Tidak dijual publik.
+    { id: "owner", name: "Owner (Unlimited)", price: 0, dailyLimit: 0, monthlyLimit: 0, rateLimitPerMin: 0, support: "Owner", order: 99 }
 ]
 for (const p of PLANS) await Plan.findOneAndUpdate({ id: p.id }, p, { upsert: true })
 await Settings.findOneAndUpdate({ key: "global" }, { key: "global" }, { upsert: true })

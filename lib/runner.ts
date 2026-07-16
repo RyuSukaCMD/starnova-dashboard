@@ -69,10 +69,14 @@ export async function runApiRequest(
         keyDoc.usageMonthly = 0
         keyDoc.usageMonthStamp = m
     }
-    if (keyDoc.dailyLimit && keyDoc.usageDaily >= keyDoc.dailyLimit)
-        return err(429, "Limit harian tercapai.")
-    if (keyDoc.monthlyLimit && keyDoc.usageMonthly >= keyDoc.monthlyLimit)
-        return err(429, "Limit bulanan tercapai.")
+    // Owner / unlimited: plan "owner" atau limit 0 = TANPA BATAS (lewati cek kuota).
+    const unlimited = keyDoc.plan === "owner"
+    if (!unlimited) {
+        if (keyDoc.dailyLimit && keyDoc.usageDaily >= keyDoc.dailyLimit)
+            return err(429, "Limit harian tercapai.")
+        if (keyDoc.monthlyLimit && keyDoc.usageMonthly >= keyDoc.monthlyLimit)
+            return err(429, "Limit bulanan tercapai.")
+    }
 
     // Jalankan handler
     let result: any
