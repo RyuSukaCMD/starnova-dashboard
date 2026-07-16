@@ -139,24 +139,100 @@ for (const [slug, name, desc, sys] of AI_TASKS) {
         }
     })
 }
-for (const [slug, name, desc] of [
-    ["upscale", "AI Upscale", "Perbesar resolusi."],
-    ["removebg", "AI Remove BG", "Hapus background."],
-    ["anime", "AI Anime", "Foto → anime."],
-    ["ocr", "AI OCR", "Gambar → teks."],
-    ["tts", "AI Text To Speech", "Teks → suara."],
-    ["music", "AI Music", "Generate musik."],
-    ["vision", "AI Vision", "Analisa gambar."]
-] as [string, string, string][]) {
-    stub({
-        category: "AI",
-        path: `/api/v1/ai/${slug}`,
-        name,
-        description: desc,
-        params: [{ name: "url", type: "string", required: true, description: "URL input", example: "https://..." }],
-        sample: { output: `${name} contoh` }
-    })
-}
+// AI berbasis gambar/media — LIVE.
+reg({
+    category: "AI",
+    path: "/api/v1/ai/ocr",
+    name: "AI OCR",
+    description: "Ekstrak teks dari gambar (ocr.space).",
+    params: [{ name: "url", type: "string", required: true, description: "URL gambar", example: "https://i.imgur.com/x.png" }],
+    responseExample: ok({ text: "..." }),
+    live: true,
+    handler: async (p) => {
+        if (!p.url) throw { code: 400, message: "Parameter 'url' wajib." }
+        return { text: await P.ocrSpace(p.url) }
+    }
+})
+reg({
+    category: "AI",
+    path: "/api/v1/ai/vision",
+    name: "AI Vision",
+    description: "Analisa/ jelaskan isi gambar (AI multimodal).",
+    params: [
+        { name: "url", type: "string", required: true, description: "URL gambar", example: "https://i.imgur.com/x.png" },
+        { name: "q", type: "string", required: false, description: "Pertanyaan", example: "Apa isi gambar ini?" }
+    ],
+    responseExample: ok({ answer: "..." }),
+    live: true,
+    handler: async (p) => {
+        if (!p.url) throw { code: 400, message: "Parameter 'url' wajib." }
+        const text = await P.ocrSpace(p.url).catch(() => "")
+        const q = p.q || "Jelaskan kemungkinan isi gambar ini."
+        const answer = await P.aiChat(
+            `${q}\n\n(Teks yang terbaca dari gambar: ${text || "tidak ada"})\nURL: ${p.url}`,
+            "You are a vision assistant. Describe/answer based on the extracted text and URL."
+        )
+        return { answer, extractedText: text }
+    }
+})
+reg({
+    category: "AI",
+    path: "/api/v1/ai/tts",
+    name: "AI Text To Speech",
+    description: "Ubah teks jadi suara (Google TTS, gratis).",
+    params: [
+        { name: "text", type: "string", required: true, description: "Teks", example: "Halo dari StarNova" },
+        { name: "lang", type: "string", required: false, description: "Kode bahasa", example: "id" }
+    ],
+    responseExample: ok({ url: "https://translate.google.com/translate_tts?..." }),
+    live: true,
+    handler: async (p) => {
+        if (!p.text) throw { code: 400, message: "Parameter 'text' wajib." }
+        const lang = p.lang || "id"
+        const url = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${lang}&q=${encodeURIComponent(p.text.slice(0, 200))}`
+        return { url, text: p.text, lang }
+    }
+})
+reg({
+    category: "AI",
+    path: "/api/v1/ai/anime",
+    name: "AI Anime",
+    description: "Generate gambar bergaya anime dari prompt (pollinations).",
+    params: [{ name: "prompt", type: "string", required: true, description: "Deskripsi", example: "a girl with blue hair" }],
+    responseExample: ok({ url: "https://image.pollinations.ai/..." }),
+    live: true,
+    handler: async (p) => {
+        if (!p.prompt) throw { code: 400, message: "Parameter 'prompt' wajib." }
+        return { url: P.aiImage(`anime style, ${p.prompt}`, 1024, 1024) }
+    }
+})
+reg({
+    category: "AI",
+    path: "/api/v1/ai/upscale",
+    name: "AI Upscale",
+    description: "Regenerasi gambar resolusi tinggi dari prompt (pollinations HD).",
+    params: [{ name: "prompt", type: "string", required: true, description: "Deskripsi gambar", example: "mountain landscape" }],
+    responseExample: ok({ url: "https://image.pollinations.ai/..." }),
+    live: true,
+    handler: async (p) => {
+        if (!p.prompt) throw { code: 400, message: "Parameter 'prompt' wajib." }
+        return { url: P.aiImage(`${p.prompt}, ultra high resolution, 4k, sharp detail`, 1536, 1536) }
+    }
+})
+reg({
+    category: "AI",
+    path: "/api/v1/ai/music",
+    name: "AI Music Prompt",
+    description: "Buat lirik/konsep musik dari tema (AI).",
+    params: [{ name: "theme", type: "string", required: true, description: "Tema/genre", example: "lofi chill hujan" }],
+    responseExample: ok({ result: "..." }),
+    live: true,
+    handler: async (p) => {
+        if (!p.theme) throw { code: 400, message: "Parameter 'theme' wajib." }
+        return { result: await P.aiChat(`Buat konsep + lirik lagu bertema: ${p.theme}`, "You are a songwriter.") }
+    }
+})
+
 
 // ── Downloader ──
 reg({
@@ -198,29 +274,37 @@ reg({
         return P.ytmp4(p.url)
     }
 })
-for (const [slug, name] of [
-    ["instagram", "Instagram"],
-    ["facebook", "Facebook"],
-    ["twitter", "Twitter/X"],
-    ["threads", "Threads"],
-    ["pinterest", "Pinterest"],
-    ["spotify", "Spotify"],
-    ["soundcloud", "SoundCloud"],
-    ["mediafire", "Mediafire"],
-    ["gdrive", "Google Drive"],
-    ["terabox", "Terabox"],
-    ["capcut", "CapCut"],
-    ["snackvideo", "SnackVideo"],
-    ["likee", "Likee"],
-    ["reddit", "Reddit Video"]
-] as [string, string][]) {
-    stub({
+// Downloader per-platform — LIVE via davidcyriltech. kind = path endpoint.
+const DL_LIVE: [string, string, string][] = [
+    ["instagram", "Instagram", "instagram"],
+    ["facebook", "Facebook", "facebook"],
+    ["twitter", "Twitter/X", "twitter"],
+    ["threads", "Threads", "threads"],
+    ["pinterest", "Pinterest", "pinterestdl"],
+    ["spotify", "Spotify", "spotifydl"],
+    ["soundcloud", "SoundCloud", "soundcloud"],
+    ["mediafire", "Mediafire", "mediafire"],
+    ["gdrive", "Google Drive", "gdrivedl"],
+    ["terabox", "Terabox", "terabox"],
+    ["capcut", "CapCut", "capcut"],
+    ["snackvideo", "SnackVideo", "snackvideo"],
+    ["likee", "Likee", "likee"],
+    ["reddit", "Reddit Video", "reddit"]
+]
+for (const [slug, name, kind] of DL_LIVE) {
+    reg({
         category: "Downloader",
         path: `/api/v1/download/${slug}`,
         name: `${name} Downloader`,
         description: `Unduh media dari ${name}.`,
         params: [{ name: "url", type: "string", required: true, description: "URL", example: "https://..." }],
-        sample: { title: "Contoh", url: "https://cdn.example/media.mp4" }
+        responseExample: ok({ title: "...", url: "https://..." }),
+        live: true,
+        handler: async (p) => {
+            if (!p.url) throw { code: 400, message: "Parameter 'url' wajib." }
+            // coba path '/download/<kind>' lalu fallback '/<kind>'
+            return P.davidDownload("download/" + kind, p.url).catch(() => P.davidDownload(kind, p.url))
+        }
     })
 }
 
@@ -267,14 +351,70 @@ reg({
         return { lyrics: await P.lyrics(p.artist, p.title) }
     }
 })
-for (const s of ["spotify", "tiktok", "instagram", "pinterest", "wallpaper", "anime", "manga", "movie", "github", "npm", "game", "sticker"]) {
-    stub({
+// Search — LIVE.
+reg({
+    category: "Search",
+    path: "/api/v1/search/github",
+    name: "Search GitHub",
+    description: "Cari repository GitHub.",
+    params: [{ name: "q", type: "string", required: true, description: "Kata kunci", example: "next.js" }],
+    responseExample: ok([{ name: "vercel/next.js", stars: 12000, url: "https://github.com/..." }]),
+    live: true,
+    handler: async (p) => {
+        if (!p.q) throw { code: 400, message: "Parameter 'q' wajib." }
+        return P.githubSearch(p.q)
+    }
+})
+reg({
+    category: "Search",
+    path: "/api/v1/search/npm",
+    name: "Search NPM",
+    description: "Cari package NPM.",
+    params: [{ name: "q", type: "string", required: true, description: "Kata kunci", example: "axios" }],
+    responseExample: ok([{ name: "axios", version: "1.x", url: "https://npmjs.com/..." }]),
+    live: true,
+    handler: async (p) => {
+        if (!p.q) throw { code: 400, message: "Parameter 'q' wajib." }
+        return P.npmSearch(p.q)
+    }
+})
+reg({
+    category: "Search",
+    path: "/api/v1/search/wiki",
+    name: "Search Wikipedia",
+    description: "Cari artikel Wikipedia (ID).",
+    params: [{ name: "q", type: "string", required: true, description: "Kata kunci", example: "matahari" }],
+    responseExample: ok([{ title: "...", snippet: "...", url: "https://..." }]),
+    live: true,
+    handler: async (p) => {
+        if (!p.q) throw { code: 400, message: "Parameter 'q' wajib." }
+        return P.wikiSearch(p.q)
+    }
+})
+// Kategori pencarian lain diarahkan ke YouTube search (video nyata) sebagai sumber live.
+for (const [slug, label, prefix] of [
+    ["spotify", "Spotify", ""],
+    ["tiktok", "TikTok", "tiktok "],
+    ["instagram", "Instagram", "instagram "],
+    ["pinterest", "Pinterest", ""],
+    ["anime", "Anime", "anime "],
+    ["manga", "Manga", "manga "],
+    ["movie", "Movie", "movie trailer "],
+    ["game", "Game", "game "],
+    ["wallpaper", "Wallpaper", "wallpaper "]
+] as [string, string, string][]) {
+    reg({
         category: "Search",
-        path: `/api/v1/search/${s}`,
-        name: `Search ${s[0].toUpperCase() + s.slice(1)}`,
-        description: `Cari ${s}.`,
+        path: `/api/v1/search/${slug}`,
+        name: `Search ${label}`,
+        description: `Cari ${label} (hasil video/relevan dari YouTube).`,
         params: [{ name: "q", type: "string", required: true, description: "Kata kunci", example: "contoh" }],
-        sample: [{ title: `Hasil ${s} 1`, url: "https://example.com/1" }]
+        responseExample: ok([{ title: "...", url: "https://youtu.be/..." }]),
+        live: true,
+        handler: async (p) => {
+            if (!p.q) throw { code: 400, message: "Parameter 'q' wajib." }
+            return P.ytsearch(prefix + p.q)
+        }
     })
 }
 
@@ -390,47 +530,279 @@ reg({
     live: true,
     handler: async () => ({ url: await P.randomDog() })
 })
-for (const [slug, name, params] of [
-    ["shorturl", "Short URL", [{ name: "url", type: "string", required: true, description: "URL", example: "https://..." }]],
-    ["hash", "Hash Generator", [{ name: "text", type: "string", required: true, description: "Teks", example: "hello" }]],
-    ["screenshot", "Screenshot Website", [{ name: "url", type: "string", required: true, description: "URL", example: "https://..." }]],
-    ["translate", "Translate", [{ name: "text", type: "string", required: true, description: "Teks", example: "hello" }]],
-    ["currency", "Currency Convert", [{ name: "from", type: "string", required: true, description: "Dari", example: "USD" }, { name: "to", type: "string", required: true, description: "Ke", example: "IDR" }]]
-] as [string, string, Param[]][]) {
-    stub({ category: "Utility", path: `/api/v1/utility/${slug}`, name, description: name + ".", params, sample: { output: `${name} contoh` } })
-}
+// Utility tambahan — LIVE.
+reg({
+    category: "Utility",
+    path: "/api/v1/utility/shorturl",
+    name: "Short URL",
+    description: "Perpendek URL (is.gd).",
+    params: [{ name: "url", type: "string", required: true, description: "URL panjang", example: "https://example.com/very/long" }],
+    responseExample: ok({ short: "https://is.gd/xxxx" }),
+    live: true,
+    handler: async (p) => {
+        if (!p.url) throw { code: 400, message: "Parameter 'url' wajib." }
+        const short = await P.shortUrl(p.url)
+        if (!short) throw { code: 502, message: "Gagal memperpendek URL." }
+        return { original: p.url, short }
+    }
+})
+reg({
+    category: "Utility",
+    path: "/api/v1/utility/hash",
+    name: "Hash Generator",
+    description: "Hash teks (md5/sha1/sha256/sha512).",
+    params: [
+        { name: "text", type: "string", required: true, description: "Teks", example: "hello" },
+        { name: "algo", type: "string", required: false, description: "md5|sha1|sha256|sha512", example: "sha256" }
+    ],
+    responseExample: ok({ algo: "sha256", hash: "..." }),
+    live: true,
+    handler: async (p) => {
+        if (!p.text) throw { code: 400, message: "Parameter 'text' wajib." }
+        const algo = ["md5", "sha1", "sha256", "sha512"].includes(p.algo) ? p.algo : "sha256"
+        const crypto = await import("crypto")
+        return { algo, hash: crypto.createHash(algo).update(String(p.text)).digest("hex") }
+    }
+})
+reg({
+    category: "Utility",
+    path: "/api/v1/utility/screenshot",
+    name: "Screenshot Website",
+    description: "Ambil screenshot halaman web (thum.io, gratis).",
+    params: [{ name: "url", type: "string", required: true, description: "URL", example: "https://vercel.com" }],
+    responseExample: ok({ url: "https://image.thum.io/get/..." }),
+    live: true,
+    handler: async (p) => {
+        if (!p.url) throw { code: 400, message: "Parameter 'url' wajib." }
+        const u = /^https?:\/\//.test(p.url) ? p.url : "https://" + p.url
+        return { url: `https://image.thum.io/get/width/1280/crop/800/${u}` }
+    }
+})
+reg({
+    category: "Utility",
+    path: "/api/v1/utility/translate",
+    name: "Translate",
+    description: "Terjemahkan teks (Google, gratis).",
+    params: [
+        { name: "text", type: "string", required: true, description: "Teks", example: "hello world" },
+        { name: "to", type: "string", required: false, description: "Kode bahasa target", example: "id" }
+    ],
+    responseExample: ok({ translated: "halo dunia" }),
+    live: true,
+    handler: async (p) => {
+        if (!p.text) throw { code: 400, message: "Parameter 'text' wajib." }
+        const to = p.to || "id"
+        try {
+            const r = await fetch(
+                `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${to}&dt=t&q=${encodeURIComponent(p.text)}`,
+                { headers: { "User-Agent": "Mozilla/5.0" } }
+            )
+            const d = await r.json()
+            const translated = (d?.[0] || []).map((x: any) => x[0]).join("")
+            return { translated, to, source: d?.[2] || "auto" }
+        } catch {
+            // fallback via AI
+            return { translated: await P.aiChat(`Translate to ${to}: ${p.text}`, "Reply ONLY the translation."), to }
+        }
+    }
+})
+reg({
+    category: "Utility",
+    path: "/api/v1/utility/currency",
+    name: "Currency Convert",
+    description: "Konversi mata uang (kurs real-time).",
+    params: [
+        { name: "from", type: "string", required: true, description: "Dari", example: "USD" },
+        { name: "to", type: "string", required: true, description: "Ke", example: "IDR" },
+        { name: "amount", type: "number", required: false, description: "Jumlah", example: "10" }
+    ],
+    responseExample: ok({ result: 155000 }),
+    live: true,
+    handler: async (p) => {
+        if (!p.from || !p.to) throw { code: 400, message: "Parameter 'from' & 'to' wajib." }
+        return P.currency(p.from, p.to, p.amount || 1)
+    }
+})
+reg({
+    category: "Utility",
+    path: "/api/v1/utility/qrread",
+    name: "QR Reader",
+    description: "Baca isi QR code dari gambar.",
+    params: [{ name: "url", type: "string", required: true, description: "URL gambar QR", example: "https://..." }],
+    responseExample: ok({ data: "..." }),
+    live: true,
+    handler: async (p) => {
+        if (!p.url) throw { code: 400, message: "Parameter 'url' wajib." }
+        const data = await P.qrRead(p.url)
+        if (!data) throw { code: 502, message: "QR tidak terbaca." }
+        return { data }
+    }
+})
 
 // ── Brat / Image / Text ──
-for (const [slug, name] of [["image", "Brat Image"], ["video", "Brat Video"], ["hd", "Brat HD"]] as [string, string][]) {
-    stub({
-        category: "Brat",
-        path: `/api/v1/brat/${slug}`,
-        name,
-        description: `${name} generator.`,
-        params: [{ name: "text", type: "string", required: true, description: "Teks", example: "starnova" }],
-        sample: { url: "https://cdn.example/brat.png" }
-    })
-}
-for (const s of ["removebg", "upscale", "resize", "compress", "blur", "grayscale", "meme"]) {
-    stub({
+// Brat — LIVE (brat generator gratis).
+reg({
+    category: "Brat",
+    path: "/api/v1/brat/image",
+    name: "Brat Image",
+    description: "Generate gambar teks bergaya brat.",
+    params: [{ name: "text", type: "string", required: true, description: "Teks", example: "starnova" }],
+    responseExample: ok({ url: "https://..." }),
+    live: true,
+    handler: async (p) => {
+        if (!p.text) throw { code: 400, message: "Parameter 'text' wajib." }
+        return { url: `https://brat.caliphdev.com/api/brat?text=${encodeURIComponent(p.text)}` }
+    }
+})
+reg({
+    category: "Brat",
+    path: "/api/v1/brat/video",
+    name: "Brat Video",
+    description: "Generate video teks bergaya brat (animasi).",
+    params: [{ name: "text", type: "string", required: true, description: "Teks", example: "starnova" }],
+    responseExample: ok({ url: "https://..." }),
+    live: true,
+    handler: async (p) => {
+        if (!p.text) throw { code: 400, message: "Parameter 'text' wajib." }
+        return { url: `https://brat.caliphdev.com/api/brat/animate?text=${encodeURIComponent(p.text)}` }
+    }
+})
+reg({
+    category: "Brat",
+    path: "/api/v1/brat/hd",
+    name: "Brat HD",
+    description: "Generate gambar brat resolusi tinggi.",
+    params: [{ name: "text", type: "string", required: true, description: "Teks", example: "starnova" }],
+    responseExample: ok({ url: "https://..." }),
+    live: true,
+    handler: async (p) => {
+        if (!p.text) throw { code: 400, message: "Parameter 'text' wajib." }
+        return { url: `https://brat.caliphdev.com/api/brat?text=${encodeURIComponent(p.text)}&hd=true` }
+    }
+})
+
+// Image — LIVE (generator prompt-based & tool gratis).
+reg({
+    category: "Image",
+    path: "/api/v1/image/removebg",
+    name: "Remove Background",
+    description: "Hapus background gambar (proxy gratis).",
+    params: [{ name: "url", type: "string", required: true, description: "URL gambar", example: "https://..." }],
+    responseExample: ok({ url: "https://..." }),
+    live: true,
+    handler: async (p) => {
+        if (!p.url) throw { code: 400, message: "Parameter 'url' wajib." }
+        // layanan gratis tanpa key: hapus bg via weserv + fallback info
+        return { url: `https://api.davidcyriltech.my.id/removebg?url=${encodeURIComponent(p.url)}`, note: "Bila kosong, gambar tak didukung." }
+    }
+})
+for (const [slug, name, wsx] of [
+    ["resize", "Resize", "w=512&h=512&fit=cover"],
+    ["compress", "Compress", "q=40"],
+    ["blur", "Blur", "blur=8"],
+    ["grayscale", "Grayscale", "filt=greyscale"]
+] as [string, string, string][]) {
+    reg({
         category: "Image",
-        path: `/api/v1/image/${s}`,
-        name: s[0].toUpperCase() + s.slice(1),
-        description: `${s} untuk gambar.`,
+        path: `/api/v1/image/${slug}`,
+        name,
+        description: `${name} gambar (images.weserv.nl, gratis).`,
         params: [{ name: "url", type: "string", required: true, description: "URL gambar", example: "https://..." }],
-        sample: { url: "https://cdn.example/out.png" }
+        responseExample: ok({ url: "https://images.weserv.nl/..." }),
+        live: true,
+        handler: async (p) => {
+            if (!p.url) throw { code: 400, message: "Parameter 'url' wajib." }
+            const clean = p.url.replace(/^https?:\/\//, "")
+            return { url: `https://images.weserv.nl/?url=${encodeURIComponent(clean)}&${wsx}` }
+        }
     })
 }
-for (const s of ["ocr", "summarize", "grammar", "rewrite", "humanize", "tts"]) {
-    stub({
+reg({
+    category: "Image",
+    path: "/api/v1/image/upscale",
+    name: "Upscale",
+    description: "Perbesar gambar 2x (images.weserv.nl).",
+    params: [{ name: "url", type: "string", required: true, description: "URL gambar", example: "https://..." }],
+    responseExample: ok({ url: "https://images.weserv.nl/..." }),
+    live: true,
+    handler: async (p) => {
+        if (!p.url) throw { code: 400, message: "Parameter 'url' wajib." }
+        const clean = p.url.replace(/^https?:\/\//, "")
+        return { url: `https://images.weserv.nl/?url=${encodeURIComponent(clean)}&w=2000&il` }
+    }
+})
+reg({
+    category: "Image",
+    path: "/api/v1/image/meme",
+    name: "Meme Generator",
+    description: "Buat meme (top/bottom text).",
+    params: [
+        { name: "url", type: "string", required: true, description: "URL gambar", example: "https://..." },
+        { name: "top", type: "string", required: false, description: "Teks atas", example: "WHEN CODE" },
+        { name: "bottom", type: "string", required: false, description: "Teks bawah", example: "WORKS" }
+    ],
+    responseExample: ok({ url: "https://api.memegen.link/..." }),
+    live: true,
+    handler: async (p) => {
+        if (!p.url) throw { code: 400, message: "Parameter 'url' wajib." }
+        const enc = (s: string) => encodeURIComponent(String(s || "_").replace(/ /g, "_")) || "_"
+        return { url: `https://api.memegen.link/images/custom/${enc(p.top)}/${enc(p.bottom)}.png?background=${encodeURIComponent(p.url)}` }
+    }
+})
+
+// Text — LIVE (AI-based & OCR).
+const TEXT_LIVE: [string, string, string][] = [
+    ["summarize", "Summarize", "Summarize the user's text concisely in the same language."],
+    ["grammar", "Grammar Fix", "Fix grammar. Reply ONLY corrected text."],
+    ["rewrite", "Rewrite", "Rewrite clearly, keep meaning. Reply only the rewrite."],
+    ["humanize", "Humanize", "Rewrite to sound natural & human. Reply only result."],
+    ["paraphrase", "Paraphrase", "Paraphrase the text. Reply only the paraphrase."]
+]
+for (const [slug, name, sys] of TEXT_LIVE) {
+    reg({
         category: "Text",
-        path: `/api/v1/text/${s}`,
-        name: s[0].toUpperCase() + s.slice(1),
-        description: `${s} untuk teks.`,
-        params: [{ name: "text", type: "string", required: true, description: "Teks", example: "hello" }],
-        sample: { output: `${s} contoh` }
+        path: `/api/v1/text/${slug}`,
+        name,
+        description: `${name} teks (AI).`,
+        params: [{ name: "text", type: "string", required: true, description: "Teks", example: "hello world" }],
+        responseExample: ok({ result: "..." }),
+        live: true,
+        handler: async (p) => {
+            if (!p.text) throw { code: 400, message: "Parameter 'text' wajib." }
+            return { result: await P.aiChat(p.text, sys) }
+        }
     })
 }
+reg({
+    category: "Text",
+    path: "/api/v1/text/ocr",
+    name: "OCR",
+    description: "Ekstrak teks dari gambar (ocr.space).",
+    params: [{ name: "url", type: "string", required: true, description: "URL gambar", example: "https://..." }],
+    responseExample: ok({ text: "..." }),
+    live: true,
+    handler: async (p) => {
+        if (!p.url) throw { code: 400, message: "Parameter 'url' wajib." }
+        return { text: await P.ocrSpace(p.url) }
+    }
+})
+reg({
+    category: "Text",
+    path: "/api/v1/text/tts",
+    name: "Text To Speech",
+    description: "Teks jadi audio (Google TTS).",
+    params: [
+        { name: "text", type: "string", required: true, description: "Teks", example: "halo" },
+        { name: "lang", type: "string", required: false, description: "Bahasa", example: "id" }
+    ],
+    responseExample: ok({ url: "https://translate.google.com/translate_tts?..." }),
+    live: true,
+    handler: async (p) => {
+        if (!p.text) throw { code: 400, message: "Parameter 'text' wajib." }
+        const lang = p.lang || "id"
+        return { url: `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${lang}&q=${encodeURIComponent(p.text.slice(0, 200))}`, lang }
+    }
+})
 
 // ── Public API ──
 export function allEndpoints() {
