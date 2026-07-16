@@ -6,7 +6,7 @@ import { STANDARD_CREATOR } from "./config"
 const today = () => new Date().toISOString().slice(0, 10)
 const month = () => new Date().toISOString().slice(0, 7)
 
-export type RunResult = { status: number; body: any }
+export type RunResult = { status: number; body?: any; binary?: Buffer; contentType?: string }
 
 /**
  * Validasi API key + jalankan endpoint. Dipakai oleh route /api/v1/[...].
@@ -78,9 +78,17 @@ export async function runApiRequest(
     let result: any
     let status = 200
     let outBody: any
+    let binary: Buffer | undefined
+    let contentType: string | undefined
     try {
         result = await ep.handler(params)
-        outBody = { status: true, creator: STANDARD_CREATOR, result }
+        // Handler bisa balas gambar/binary: { __binary: Buffer, contentType }
+        if (result && result.__binary) {
+            binary = result.__binary
+            contentType = result.contentType || "image/png"
+        } else {
+            outBody = { status: true, creator: STANDARD_CREATOR, result }
+        }
     } catch (e: any) {
         status = e?.code && Number.isInteger(e.code) ? e.code : 500
         outBody = { status: false, message: e?.message || "Terjadi kesalahan.", creator: STANDARD_CREATOR }
@@ -105,5 +113,6 @@ export async function runApiRequest(
     }).catch(() => {})
     Settings.updateOne({ key: "global" }, { $inc: { totalRequestCounter: 1 } }, { upsert: true }).catch(() => {})
 
+    if (binary) return { status, binary, contentType }
     return { status, body: outBody }
 }

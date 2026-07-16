@@ -23,8 +23,15 @@ async function handle(req: NextRequest, path: string, extra: Record<string, any>
         if (k !== "apikey") params[k] = v
     })
     const ctx = ctxFrom(req)
-    const { status, body } = await runApiRequest(fullPath, params, ctx)
-    return NextResponse.json(body, { status })
+    const res = await runApiRequest(fullPath, params, ctx)
+    // Balas gambar/binary bila handler menghasilkannya (endpoint self-hosted image).
+    if (res.binary) {
+        return new NextResponse(res.binary, {
+            status: res.status,
+            headers: { "Content-Type": res.contentType || "image/png", "Cache-Control": "public, max-age=60" }
+        })
+    }
+    return NextResponse.json(res.body, { status: res.status })
 }
 
 export async function GET(req: NextRequest, { params }: { params: { path: string[] } }) {

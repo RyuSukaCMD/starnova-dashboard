@@ -19,7 +19,8 @@ const nextConfig = {
         ]
     },
     experimental: {
-        // Streaming & partial rendering aktif secara default di App Router.
+        // sharp (native) dijalankan sebagai package eksternal server.
+        serverComponentsExternalPackages: ["sharp"],
         optimizePackageImports: ["framer-motion"]
     }
 }
