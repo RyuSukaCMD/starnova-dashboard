@@ -4,6 +4,7 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { codeSamples } from "@/lib/codeSamples"
 import { hlJSON } from "@/lib/highlight"
+import Icon from "@/components/ui/Icon"
 
 const METHOD_COLORS: Record<string, string> = {
     GET: "bg-success/15 text-emerald-300",
@@ -15,7 +16,7 @@ const METHOD_COLORS: Record<string, string> = {
 function copy(text: string, msg = "Disalin!") {
     navigator.clipboard?.writeText(text)
     const el = document.createElement("div")
-    el.textContent = "📋 " + msg
+    el.textContent = msg
     el.className = "fixed bottom-6 left-1/2 z-[999] -translate-x-1/2 rounded-xl border border-white/15 bg-[#0a0b1e]/95 px-4 py-2 text-sm backdrop-blur"
     document.body.appendChild(el)
     setTimeout(() => el.remove(), 1800)
@@ -86,9 +87,9 @@ function EndpointCard({ ep }: { ep: any }) {
             <pre className="mt-2 overflow-auto rounded-xl border border-white/8 bg-[#070813] p-3 font-mono text-xs leading-relaxed text-[#c9d4ff]">{samples[lang]}</pre>
 
             <div className="mt-3 flex flex-wrap gap-2">
-                <button onClick={() => copy(ep.path)} className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300 hover:text-accent">📋 Copy Endpoint</button>
-                <button onClick={() => copy(JSON.stringify(ep.responseExample, null, 2))} className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300 hover:text-accent">📋 Copy Response</button>
-                <Link href={`/playground?ep=${encodeURIComponent(ep.path)}`} className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent hover:bg-white/10">⚡ Try API</Link>
+                <button onClick={() => copy(ep.path)} className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300 hover:text-accent"><span className="inline-flex items-center gap-1"><Icon name="copy" size={13} /> Copy Endpoint</span></button>
+                <button onClick={() => copy(JSON.stringify(ep.responseExample, null, 2))} className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300 hover:text-accent"><span className="inline-flex items-center gap-1"><Icon name="copy" size={13} /> Copy Response</span></button>
+                <Link href={`/playground?ep=${encodeURIComponent(ep.path)}`} className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs text-accent hover:bg-white/10"><span className="inline-flex items-center gap-1"><Icon name="bolt" size={13} /> Try API</span></Link>
             </div>
         </motion.div>
     )

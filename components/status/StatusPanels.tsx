@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react"
 import { motion } from "framer-motion"
 import { Counter, Stagger, StaggerItem, TiltCard } from "@/components/ui/Motion"
+import Icon from "@/components/ui/Icon"
 
 // Panel status "control center". Metrik sistem (CPU/RAM/latency/worker) di
 // serverless tak bisa nyata → disimulasikan realtime yang meyakinkan.
@@ -41,7 +42,7 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
 }
 
 const ENDPOINTS = ["/api/v1/ai/chat", "/api/v1/download/tiktok", "/api/v1/utility/qr", "/api/v1/ai/image", "/api/v1/search/youtube"]
-const COUNTRIES = ["🇮🇩 Indonesia", "🇺🇸 USA", "🇸🇬 Singapore", "🇯🇵 Japan", "🇩🇪 Germany", "🇧🇷 Brazil", "🇮🇳 India"]
+const COUNTRIES = ["Indonesia", "United States", "Singapore", "Japan", "Germany", "Brazil", "India"]
 
 export default function StatusPanels({ initial }: { initial: any }) {
     const [cpu, setCpu] = useState(34)
@@ -105,7 +106,7 @@ export default function StatusPanels({ initial }: { initial: any }) {
             <div className="grid gap-5 lg:grid-cols-3">
                 {/* System health */}
                 <TiltCard className="glass noise rounded-2xl p-6">
-                    <h3 className="mb-4 flex items-center gap-2 font-semibold">🛰️ System Health</h3>
+                    <h3 className="mb-4 flex items-center gap-2 font-semibold"><Icon name="satellite" size={18} className="text-accent" /> System Health</h3>
                     <div className="space-y-4">
                         <Gauge label="CPU" value={cpu} color="linear-gradient(90deg,#22D3EE,#4F8CFF)" />
                         <Gauge label="RAM" value={ram} color="linear-gradient(90deg,#4F8CFF,#8B5CF6)" />
@@ -117,7 +118,7 @@ export default function StatusPanels({ initial }: { initial: any }) {
 
                 {/* Services */}
                 <TiltCard className="glass noise rounded-2xl p-6">
-                    <h3 className="mb-4 font-semibold">⚡ Services</h3>
+                    <h3 className="mb-4 flex items-center gap-2 font-semibold"><Icon name="bolt" size={18} className="text-accent" /> Services</h3>
                     <div className="space-y-2.5">
                         {services.map((s) => (
                             <div key={s.name} className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5 text-sm">
@@ -132,7 +133,7 @@ export default function StatusPanels({ initial }: { initial: any }) {
 
                 {/* Live log */}
                 <TiltCard className="glass noise rounded-2xl p-6">
-                    <h3 className="mb-4 flex items-center gap-2 font-semibold">📡 Live Request Feed</h3>
+                    <h3 className="mb-4 flex items-center gap-2 font-semibold"><Icon name="signal" size={18} className="text-accent" /> Live Request Feed</h3>
                     <div className="space-y-2">
                         {logs.length === 0 && <div className="text-sm text-slate-500">Menunggu aktivitas…</div>}
                         {logs.map((l) => (
@@ -148,7 +149,7 @@ export default function StatusPanels({ initial }: { initial: any }) {
 
             {/* World map (simulated request origins) */}
             <TiltCard className="glass noise rounded-2xl p-6">
-                <h3 className="mb-4 font-semibold">🌍 Request Origins</h3>
+                <h3 className="mb-4 flex items-center gap-2 font-semibold"><Icon name="globe" size={18} className="text-accent" /> Request Origins</h3>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     {COUNTRIES.slice(0, 8).map((c, i) => {
                         const pct = Math.max(4, 70 - i * 9 + rand(-3, 3))

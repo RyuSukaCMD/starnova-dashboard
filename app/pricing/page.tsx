@@ -1,5 +1,6 @@
 import { PageTransition, Reveal, Stagger, StaggerItem, TiltCard } from "@/components/ui/Motion"
 import Button from "@/components/ui/Button"
+import Icon from "@/components/ui/Icon"
 
 export const metadata = { title: "Pricing" }
 
@@ -18,7 +19,7 @@ export default function PricingPage() {
                 <div className="mx-auto max-w-6xl">
                     <Reveal className="mb-12 text-center">
                         <span className="text-xs font-semibold uppercase tracking-[0.15em] text-accent">Pricing</span>
-                        <h1 className="mt-2 text-4xl font-bold md:text-5xl">Pilih paket <span className="grad-text">galaksimu</span></h1>
+                        <h1 className="mt-2 text-4xl font-bold md:text-5xl">Pilih paket <span className="grad-text">yang pas</span></h1>
                         <p className="mt-2 text-slate-400">Mulai gratis, upgrade kapan saja. Tanpa biaya tersembunyi.</p>
                     </Reveal>
                     <Stagger className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
@@ -29,11 +30,11 @@ export default function PricingPage() {
                                     <div className="text-lg font-semibold">{p.name}</div>
                                     <div className="mt-2 font-mono text-3xl font-bold">{rp(p.price)}<span className="text-sm font-normal text-slate-500">{p.price ? " /bln" : ""}</span></div>
                                     <div className="mt-3 space-y-1 text-sm text-slate-400">
-                                        <div>🎯 {p.daily} request/hari</div>
-                                        <div>📅 {p.monthly} request/bulan</div>
+                                        <div className="flex items-center gap-2"><Icon name="target" size={15} className="text-accent" /> {p.daily} request/hari</div>
+                                        <div className="flex items-center gap-2"><Icon name="chart" size={15} className="text-accent" /> {p.monthly} request/bulan</div>
                                     </div>
                                     <ul className="mt-4 space-y-2 text-sm text-slate-300">
-                                        {p.feats.map((f) => <li key={f} className="flex gap-2"><span className="text-accent">✦</span>{f}</li>)}
+                                        {p.feats.map((f) => <li key={f} className="flex items-start gap-2"><Icon name="check" size={16} className="mt-0.5 shrink-0 text-accent" />{f}</li>)}
                                     </ul>
                                     <div className="mt-5">
                                         <Button href="/dashboard" variant={p.featured ? "primary" : "ghost"} className="w-full">{p.price ? "Buy Now" : "Mulai Gratis"}</Button>

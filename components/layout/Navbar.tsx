@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useSession, signOut } from "next-auth/react"
 import Button from "@/components/ui/Button"
+import Icon from "@/components/ui/Icon"
 
 const LINKS = [
     { href: "/", label: "Home" },
@@ -42,7 +43,7 @@ export default function Navbar() {
         >
             <div className={`mx-auto mt-3 flex w-[min(1200px,94%)] items-center justify-between rounded-2xl border px-4 py-2.5 transition-all duration-300 ${scrolled ? "glass border-white/10" : "border-transparent bg-transparent"}`}>
                 <Link href="/" className="flex items-center gap-2.5 font-bold">
-                    <span className="grid h-8 w-8 place-items-center rounded-lg bg-[linear-gradient(135deg,#22D3EE,#8B5CF6)] shadow-[0_0_18px_rgba(139,92,246,.6)]">✦</span>
+                    <span className="grid h-8 w-8 place-items-center rounded-lg bg-[linear-gradient(135deg,#22D3EE,#8B5CF6)] text-white shadow-[0_0_18px_rgba(139,92,246,.6)]"><Icon name="star" size={16} /></span>
                     <span className="text-[1.05rem]">Star<span className="grad-text">Nova</span></span>
                 </Link>
 

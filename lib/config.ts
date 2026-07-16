@@ -1,31 +1,50 @@
-// Konfigurasi terpusat — dibaca dari environment (single domain, configurable).
+// Konfigurasi terpusat — dibaca LAZY dari environment.
+// PENTING: nilai env non-NEXT_PUBLIC hanya tersedia di runtime server. Karena
+// itu semua dibaca lewat GETTER (bukan const literal) agar tidak "beku" kosong
+// saat build. Ini yang memperbaiki bug "GOOGLE_CLIENT_ID ga kebaca".
 export const config = {
     appName: "StarNova",
-    creator: process.env.CREATOR || "StarNova API",
-    // Satu domain untuk semuanya (landing + dashboard + api). Set di .env.
-    siteUrl:
-        process.env.NEXT_PUBLIC_SITE_URL ||
-        process.env.NEXTAUTH_URL ||
-        "https://starnova.my.id",
-    mongoUri: process.env.MONGODB_URI || "",
-    jwtSecret: process.env.NEXTAUTH_SECRET || "starnova-dev-secret",
-    // Admin default: starnovabusinessmail@gmail.com (bisa ditambah lewat ADMIN_EMAILS).
-    adminEmails: [
-        "starnovabusinessmail@gmail.com",
-        ...(process.env.ADMIN_EMAILS || "")
-            .split(",")
-            .map((s) => s.trim().toLowerCase())
-            .filter(Boolean)
-    ],
-    google: {
-        clientId: process.env.GOOGLE_CLIENT_ID || "",
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET || ""
+    get creator() {
+        return process.env.CREATOR || "StarNova API"
     },
-    // Login default = Google OAuth. Demo login OFF secara default (aktifkan
-    // eksplisit dengan ALLOW_DEMO_LOGIN=true, mis. untuk testing lokal tanpa Google).
-    allowDemoLogin: process.env.ALLOW_DEMO_LOGIN === "true"
+    get siteUrl() {
+        return (
+            process.env.NEXT_PUBLIC_SITE_URL ||
+            process.env.NEXTAUTH_URL ||
+            "https://starnova.my.id"
+        )
+    },
+    get mongoUri() {
+        return process.env.MONGODB_URI || ""
+    },
+    get jwtSecret() {
+        return process.env.NEXTAUTH_SECRET || "starnova-dev-secret"
+    },
+    // Admin default: starnovabusinessmail@gmail.com (bisa ditambah lewat ADMIN_EMAILS).
+    get adminEmails() {
+        return [
+            "starnovabusinessmail@gmail.com",
+            ...(process.env.ADMIN_EMAILS || "")
+                .split(",")
+                .map((s) => s.trim().toLowerCase())
+                .filter(Boolean)
+        ]
+    },
+    get google() {
+        return {
+            clientId: (process.env.GOOGLE_CLIENT_ID || "").trim(),
+            clientSecret: (process.env.GOOGLE_CLIENT_SECRET || "").trim()
+        }
+    },
+    // Login default = Google OAuth. Demo login OFF kecuali di-set true.
+    get allowDemoLogin() {
+        return process.env.ALLOW_DEMO_LOGIN === "true"
+    }
 }
 
 export const API_KEY_PREFIX = "snv_"
-export const STANDARD_CREATOR = config.creator
+export function creatorName() {
+    return config.creator
+}
+export const STANDARD_CREATOR = "StarNova API"
 export default config

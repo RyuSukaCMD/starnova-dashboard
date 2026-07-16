@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import Button from "@/components/ui/Button"
+import Icon from "@/components/ui/Icon"
 
 export default function LoginCard({ hasGoogle, allowDemo }: { hasGoogle: boolean; allowDemo: boolean }) {
     const sp = useSearchParams()
@@ -20,7 +21,7 @@ export default function LoginCard({ hasGoogle, allowDemo }: { hasGoogle: boolean
             className="glass noise w-full max-w-md rounded-2xl p-8"
         >
             <div className="mb-6 text-center">
-                <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-xl bg-[linear-gradient(135deg,#22D3EE,#8B5CF6)] text-xl shadow-[0_0_24px_rgba(139,92,246,.6)]">✦</div>
+                <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-xl bg-[linear-gradient(135deg,#22D3EE,#8B5CF6)] text-white shadow-[0_0_24px_rgba(139,92,246,.6)]"><Icon name="star" size={22} /></div>
                 <h1 className="text-2xl font-bold">Masuk ke <span className="grad-text">StarNova</span></h1>
                 <p className="mt-1 text-sm text-slate-400">Login untuk generate API Key otomatis & pakai fitur.</p>
             </div>
@@ -36,7 +37,7 @@ export default function LoginCard({ hasGoogle, allowDemo }: { hasGoogle: boolean
             </Button>
             {!hasGoogle && (
                 <p className="mb-2 text-center text-xs text-amber-300/80">
-                    ⚠️ Google OAuth belum dikonfigurasi. Set <code className="font-mono">GOOGLE_CLIENT_ID</code> & <code className="font-mono">GOOGLE_CLIENT_SECRET</code> di environment.
+                    Google OAuth belum dikonfigurasi. Set <code className="font-mono">GOOGLE_CLIENT_ID</code> & <code className="font-mono">GOOGLE_CLIENT_SECRET</code> di environment.
                 </p>
             )}
 

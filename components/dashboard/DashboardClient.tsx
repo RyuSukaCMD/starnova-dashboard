@@ -4,6 +4,7 @@ import Image from "next/image"
 import { motion } from "framer-motion"
 import { Counter, Stagger, StaggerItem, TiltCard } from "@/components/ui/Motion"
 import Button from "@/components/ui/Button"
+import Icon from "@/components/ui/Icon"
 
 const rp = (n: number) => Number(n || 0).toLocaleString("id-ID")
 const timeAgo = (iso: string | null) => {
@@ -33,20 +34,20 @@ export default function DashboardClient({ initial }: { initial: any }) {
             if (!confirm("Hapus API Key ini?")) return
             await fetch(`/api/account/keys/${key}`, { method: "DELETE" })
             setKeys((k) => k.filter((x) => x.key !== key))
-            toast("🗑️ Key dihapus")
+            toast("Key dihapus")
             return
         }
         const r = await fetch(`/api/account/keys/${key}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }) }).then((x) => x.json())
         if (r.status) {
             setKeys((k) => k.map((x) => (x.key === key ? r.result : x)))
-            toast("✅ " + action)
+            toast("Berhasil: " + action)
         }
     }
     async function newKey() {
         const r = await fetch("/api/account/keys", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: "My Key" }) }).then((x) => x.json())
         if (r.status) {
             setKeys((k) => [r.result, ...k])
-            toast("🎉 Key baru dibuat")
+            toast("Key baru dibuat")
         }
     }
 
@@ -62,7 +63,7 @@ export default function DashboardClient({ initial }: { initial: any }) {
                             <div className="grid h-13 w-13 place-items-center rounded-2xl bg-[linear-gradient(135deg,#22D3EE,#8B5CF6)] p-3.5 text-lg font-bold">{(u.name || "S")[0].toUpperCase()}</div>
                         )}
                         <div>
-                            <h1 className="text-2xl font-bold">Halo, {u.name || "Explorer"} 👋</h1>
+                            <h1 className="text-2xl font-bold">Halo, {u.name || "User"}</h1>
                             <p className="text-sm text-slate-400">{u.email} · <span className="text-accent">{(u.plan || "free").toUpperCase()}</span></p>
                         </div>
                     </div>
@@ -72,14 +73,14 @@ export default function DashboardClient({ initial }: { initial: any }) {
                 {/* KPIs */}
                 <Stagger className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
                     {[
-                        { l: "Total Request", v: initial.totalRequest, ic: "📡" },
-                        { l: "Sisa Limit Harian", v: initial.remaining, ic: "🎯" },
-                        { l: "API Keys", v: initial.keyCount, ic: "🔑" },
-                        { l: "Expired Terdekat", txt: initial.expiredDate ? new Date(initial.expiredDate).toLocaleDateString("id-ID") : "∞", ic: "⏳" }
+                        { l: "Total Request", v: initial.totalRequest, ic: "signal" as const },
+                        { l: "Sisa Limit Harian", v: initial.remaining, ic: "target" as const },
+                        { l: "API Keys", v: initial.keyCount, ic: "key" as const },
+                        { l: "Expired Terdekat", txt: initial.expiredDate ? new Date(initial.expiredDate).toLocaleDateString("id-ID") : "∞", ic: "clock" as const }
                     ].map((k, i) => (
                         <StaggerItem key={i}>
                             <TiltCard className="glass noise rounded-2xl p-5">
-                                <div className="text-xl">{k.ic}</div>
+                                <div className="grid h-9 w-9 place-items-center rounded-lg border border-white/10 bg-white/5 text-accent"><Icon name={k.ic} size={18} /></div>
                                 <div className="mt-2 font-mono text-2xl font-bold">{k.txt ?? <Counter value={k.v} />}</div>
                                 <div className="mt-0.5 text-xs text-slate-400">{k.l}</div>
                             </TiltCard>
@@ -90,7 +91,7 @@ export default function DashboardClient({ initial }: { initial: any }) {
                 <div className="grid gap-5 lg:grid-cols-3">
                     {/* Chart */}
                     <TiltCard className="glass noise rounded-2xl p-6 lg:col-span-2">
-                        <h3 className="mb-4 font-semibold">📊 Request 7 Hari Terakhir</h3>
+                        <h3 className="mb-4 flex items-center gap-2 font-semibold"><Icon name="chart" size={18} className="text-accent" /> Request 7 Hari Terakhir</h3>
                         <div className="flex h-40 items-end gap-2">
                             {initial.chart.map((c: any, i: number) => (
                                 <div key={i} className="group relative flex-1">
@@ -110,7 +111,7 @@ export default function DashboardClient({ initial }: { initial: any }) {
 
                     {/* Top endpoint */}
                     <TiltCard className="glass noise rounded-2xl p-6">
-                        <h3 className="mb-4 font-semibold">🔥 Top Endpoint</h3>
+                        <h3 className="mb-4 flex items-center gap-2 font-semibold"><Icon name="fire" size={18} className="text-accent" /> Top Endpoint</h3>
                         {initial.topEndpoint.length ? (
                             <div className="space-y-2.5">
                                 {initial.topEndpoint.map((t: any) => (
@@ -128,7 +129,7 @@ export default function DashboardClient({ initial }: { initial: any }) {
 
                 {/* API Keys */}
                 <TiltCard className="glass noise mt-5 rounded-2xl p-6">
-                    <h3 className="mb-4 font-semibold">🔑 API Keys</h3>
+                    <h3 className="mb-4 flex items-center gap-2 font-semibold"><Icon name="key" size={18} className="text-accent" /> API Keys</h3>
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
@@ -141,7 +142,7 @@ export default function DashboardClient({ initial }: { initial: any }) {
                                 {keys.map((k) => (
                                     <tr key={k.key} className="border-t border-white/5">
                                         <td className="py-2.5 pr-4">
-                                            <button onClick={() => { navigator.clipboard?.writeText(k.key); toast("🔑 Key disalin") }} className="font-mono text-accent hover:underline">{k.key.slice(0, 18)}…</button>
+                                            <button onClick={() => { navigator.clipboard?.writeText(k.key); toast("Key disalin") }} className="font-mono text-accent hover:underline">{k.key.slice(0, 18)}…</button>
                                         </td>
                                         <td className="pr-4">{k.plan}</td>
                                         <td className="pr-4"><span className={`rounded-full px-2 py-0.5 text-[0.65rem] ${k.status === "active" ? "bg-success/15 text-emerald-300" : "bg-white/10 text-slate-400"}`}>{k.status}</span></td>
@@ -165,7 +166,7 @@ export default function DashboardClient({ initial }: { initial: any }) {
 
                 {/* Recent activity */}
                 <TiltCard className="glass noise mt-5 rounded-2xl p-6">
-                    <h3 className="mb-4 font-semibold">⚡ Recent Activity</h3>
+                    <h3 className="mb-4 flex items-center gap-2 font-semibold"><Icon name="activity" size={18} className="text-accent" /> Recent Activity</h3>
                     {initial.recent.length ? (
                         <div className="space-y-2">
                             {initial.recent.map((r: any, i: number) => (

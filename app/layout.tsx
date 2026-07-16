@@ -17,11 +17,11 @@ export const metadata: Metadata = {
         template: "%s · StarNova"
     },
     description:
-        "StarNova — platform REST API berperforma tinggi bertema Supernova. AI, Downloader, Search, Utility, dan ratusan endpoint siap pakai dengan dashboard premium.",
+        "StarNova — platform REST API berperforma tinggi. AI, Downloader, Search, Utility, dan ratusan endpoint siap pakai dengan dashboard modern.",
     keywords: ["rest api", "starnova", "ai api", "downloader api", "api platform"],
     openGraph: {
         title: "StarNova API",
-        description: "High Performance REST API Platform — Supernova themed.",
+        description: "High Performance REST API Platform.",
         url: config.siteUrl,
         siteName: "StarNova",
         type: "website"

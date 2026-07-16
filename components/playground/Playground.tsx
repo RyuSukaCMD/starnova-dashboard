@@ -6,6 +6,7 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import Button from "@/components/ui/Button"
 import { hlJSON } from "@/lib/highlight"
+import Icon from "@/components/ui/Icon"
 
 export default function Playground({ endpoints }: { endpoints: any[] }) {
     const sp = useSearchParams()
@@ -95,14 +96,14 @@ export default function Playground({ endpoints }: { endpoints: any[] }) {
                 )}
 
                 <div className="mt-5">
-                    <Button onClick={run} className="w-full" disabled={loading}>{loading ? "Menjalankan…" : "⚡ Execute"}</Button>
+                    <Button onClick={run} className="w-full" disabled={loading}>{loading ? "Menjalankan…" : (<><Icon name="bolt" size={16} /> Execute</>)}</Button>
                 </div>
             </div>
 
             {/* Panel response */}
             <div className="glass noise rounded-2xl p-6">
                 <div className="mb-3 flex flex-wrap gap-3 text-sm">
-                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 font-mono">Status: {code === null ? "—" : code + (code >= 200 && code < 300 ? " ✅" : " ❌")}</span>
+                    <span className={`rounded-full border px-3 py-1 font-mono ${code === null ? "border-white/10 bg-white/5 text-slate-300" : code >= 200 && code < 300 ? "border-success/30 bg-success/10 text-emerald-300" : "border-danger/30 bg-danger/10 text-red-300"}`}>Status: {code === null ? "—" : code}</span>
                     <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 font-mono">Time: {ms === null ? "—" : ms + "ms"}</span>
                 </div>
                 {loading ? (
